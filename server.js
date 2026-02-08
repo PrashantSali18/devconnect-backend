@@ -1,4 +1,4 @@
-import express, { json, urlencoded } from "express";
+import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import connectDB from "./config/db.js";
@@ -9,6 +9,7 @@ import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/users.routes.js";
 import messageRoutes from "./routes/message.routes.js";
 import postRoutes from "./routes/posts.routes.js";
+import notificationRoutes from "./routes/notifications.routes.js";
 import { initializeSocket } from "./socket/socket.js";
 
 // Load env vars
@@ -26,7 +27,7 @@ initializeSocket(server);
 // Middleware
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: process.env.CLIENT_URL || "*",
     credentials: true,
   }),
 );
@@ -38,7 +39,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/messages", messageRoutes);
-
+app.use("/api/notifications", notificationRoutes);
 
 // Test route
 app.get('/', (req, res) => {

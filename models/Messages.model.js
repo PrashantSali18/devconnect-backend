@@ -1,6 +1,6 @@
-import { Schema, model } from "mongoose";
+import mongoose from "mongoose";
 
-const messageSchema = new Schema(
+const messageSchema = new mongoose.Schema(
   {
     conversation: {
       type: String,
@@ -8,12 +8,12 @@ const messageSchema = new Schema(
       index: true, // Format: "userId1_userId2" (sorted alphabetically)
     },
     sender: {
-      type: Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
     receiver: {
-      type: Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
@@ -47,4 +47,4 @@ const messageSchema = new Schema(
 messageSchema.index({ conversation: 1, createdAt: -1 });
 messageSchema.index({ sender: 1, receiver: 1 });
 
-export default model("Message", messageSchema);
+export default mongoose.model("Message", messageSchema);

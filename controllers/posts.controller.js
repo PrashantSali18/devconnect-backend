@@ -1,5 +1,6 @@
 import Post from "../models/Posts.model.js";
 import User from "../models/Users.model.js";
+import { createNotification } from "./notifications.controller.js";
 import cloudinary from "../config/cloudinary.config.js";
 
 // @desc    Create a new post
@@ -257,13 +258,22 @@ export const likePost = async (req, res) => {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    // Check if post is already liked
     if (post.likes.includes(req.user.id)) {
       return res.status(400).json({ message: "Post already liked" });
     }
 
     post.likes.push(req.user.id);
     await post.save();
+
+    // CREATE NOTIFICATION
+    await createNotification({
+      recipient: post.user,
+      sender: req.user.id,
+      type: "like",
+      post: post._id,
+      message: `${req.user.name} liked your post`,
+      link: `/posts/${post._id}`,
+    });
 
     res.json({ message: "Post liked", likes: post.likes.length });
   } catch (error) {
@@ -323,8 +333,18 @@ export const addComment = async (req, res) => {
     post.comments.push(comment);
     await post.save();
 
-    // Populate the new comment
     await post.populate("comments.user", "name profilePicture");
+
+    // CREATE NOTIFICATION
+    await createNotification({
+      recipient: post.user,
+      sender: req.user.id,
+      type: "comment",
+      post: post._id,
+      comment: post.comments[post.comments.length - 1]._id,
+      message: `${req.user.name} commented on your post`,
+      link: `/posts/${post._id}`,
+    });
 
     res.status(201).json(post.comments[post.comments.length - 1]);
   } catch (error) {
@@ -399,19 +419,4 @@ export const searchPosts = async (req, res) => {
     console.error(error);
     res.status(500).json({ message: "Server error" });
   }
-};
-
-export default {
-  createPost,
-  getPosts,
-  getFeed,
-  getPostById,
-  getPostsByUser,
-  updatePost,
-  deletePost,
-  likePost,
-  unlikePost,
-  addComment,
-  deleteComment,
-  searchPosts,
 };

@@ -1,8 +1,16 @@
 import User from "../models/Users.model.js";
-import {generateToken, verifyToken} from "../utils/jwt.utils.js";
+import { generateToken, verifyToken } from "../utils/jwt.utils.js";
 
 export const register = async (req, res) => {
   try {
+    const passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({
+        message:
+          "Password must be at least 8 characters with uppercase, lowercase and number",
+      });
+    }
+
     const { name, email, password } = req.body;
 
     // Validation
@@ -57,7 +65,7 @@ export const login = async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
-        // token: verifyToken(user._id),
+        token: verifyToken(user._id),
       });
     } else {
       res.status(401).json({ message: "Invalid credentials" });

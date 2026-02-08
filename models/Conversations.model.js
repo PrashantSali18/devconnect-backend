@@ -1,17 +1,17 @@
-import { Schema, model } from "mongoose";
+import mongoose from "mongoose";
 
-const conversationSchema = new Schema(
+const conversationSchema = new mongoose.Schema(
   {
     participants: [
       {
-        type: Schema.Types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId,
         ref: "User",
       },
     ],
     lastMessage: {
       content: String,
       sender: {
-        type: Schema.Types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId,
         ref: "User",
       },
       timestamp: Date,
@@ -37,4 +37,4 @@ conversationSchema.pre("save", async function () {
 // Index for faster queries
 conversationSchema.index({ participants: 1 });
 
-export default model("Conversation", conversationSchema);
+export default mongoose.model("Conversation", conversationSchema);

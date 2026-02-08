@@ -1,4 +1,5 @@
 {
+  "type": "module",
   "name": "devconnect-backend",
   "version": "1.0.0",
   "description": "DevConnect - Developer Community Platform API",

@@ -1,4 +1,5 @@
 import User from "../models/Users.model.js";
+import { createNotification } from "./notifications.controller.js";
 import { storage } from "../config/cloudinary.config.js";
 
 // @desc    Get user profile by ID
@@ -116,24 +117,30 @@ export const followUser = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Can't follow yourself
     if (req.params.id === req.user.id) {
       return res.status(400).json({ message: "You cannot follow yourself" });
     }
 
-    // Check if already following
     if (currentUser.following.includes(req.params.id)) {
       return res
         .status(400)
         .json({ message: "You are already following this user" });
     }
 
-    // Add to following and followers
     currentUser.following.push(req.params.id);
     userToFollow.followers.push(req.user.id);
 
     await currentUser.save();
     await userToFollow.save();
+
+    // CREATE NOTIFICATION
+    await createNotification({
+      recipient: userToFollow._id,
+      sender: req.user.id,
+      type: "follow",
+      message: `${req.user.name} started following you`,
+      link: `/profile/${req.user.id}`,
+    });
 
     res.json({
       message: "User followed successfully",

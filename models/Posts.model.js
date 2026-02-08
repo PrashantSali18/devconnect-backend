@@ -1,9 +1,9 @@
-import { Schema, model } from "mongoose";
+import mongoose from "mongoose";
 
-const postSchema = new Schema(
+const postSchema = new mongoose.Schema(
   {
     user: {
-      type: Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
@@ -35,14 +35,14 @@ const postSchema = new Schema(
     },
     likes: [
       {
-        type: Schema.Types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId,
         ref: "User",
       },
     ],
     comments: [
       {
         user: {
-          type: Schema.Types.ObjectId,
+          type: mongoose.Schema.Types.ObjectId,
           ref: "User",
           required: true,
         },
@@ -77,4 +77,4 @@ const postSchema = new Schema(
 postSchema.index({ user: 1, createdAt: -1 });
 postSchema.index({ tags: 1 });
 
-export default model("Post", postSchema);
+export default mongoose.model("Post", postSchema);
