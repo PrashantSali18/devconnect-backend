@@ -1,73 +1,170 @@
-import express from "express";
-import dotenv from "dotenv";
-import cors from "cors";
-import connectDB from "./config/db.js";
-import http from "http";
+import express from 'express';
+import dotenv from 'dotenv';
+import cors from 'cors';
+import session from 'express-session';
+import { createServer } from 'http';
+import connectDB from './config/db.js';
+import passportConfig from './config/passport.js';
+import {
+  helmetConfig,
+  sanitizeData,
+  preventXSS,
+  preventHPP,
+  sanitizeUserInput,
+  corsOptions
+} from './middleware/securite.middleware.js';
+import { apiLimiter } from './middleware/rateLimiter.middleware.js';
 
-// Routes
-import authRoutes from "./routes/auth.routes.js";
-import userRoutes from "./routes/users.routes.js";
-import messageRoutes from "./routes/message.routes.js";
-import postRoutes from "./routes/posts.routes.js";
-import notificationRoutes from "./routes/notification.routes.js";
-import { initializeSocket } from "./socket/socket.js";
-
-// Load env vars
 dotenv.config();
 
-// Connect to database
+console.log('🚀 Starting server...');
+console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+
 connectDB();
 
 const app = express();
-const server = http.createServer(app); // Create HTTP server
+const server = createServer(app);
 
-// Initialize Socket.io
-initializeSocket(server);
+// Trust proxy
+app.set('trust proxy', 1);
 
-// Middleware
+// Security Middleware
+app.use(helmetConfig);
+app.use(cors(corsOptions));
+
+// Session middleware (required for Passport)
 app.use(
-  cors({
-    origin: process.env.CLIENT_URL || "*",
-    credentials: true,
-  }),
+  session({
+    secret: process.env.SESSION_SECRET || 'your-secret-key',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+  })
 );
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+// Initialize Passport
+app.use(passportConfig.initialize());
+app.use(passportConfig.session());
+
+app.use(sanitizeData);
+app.use(preventXSS);
+app.use(preventHPP);
+
+// Body parser
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Custom sanitization
+app.use(sanitizeUserInput);
+
+// Rate limiting
+if (process.env.NODE_ENV === 'production') {
+  app.use('/api/', apiLimiter);
+}
 
 // Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/users", userRoutes);
-app.use("/api/posts", postRoutes);
-app.use("/api/messages", messageRoutes);
-app.use("/api/notifications", notificationRoutes);
+import authRoutes from './routes/auth.routes.js';
+import userRoutes from './routes/users.routes.js';
+import postRoutes from './routes/posts.routes.js';
+import messageRoutes from './routes/message.routes.js';
+import notificationRoutes from './routes/notification.routes.js';
 
-// Test route
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/posts', postRoutes);
+app.use('/api/messages', messageRoutes);
+app.use('/api/notifications', notificationRoutes);
+
+// Root route
 app.get('/', (req, res) => {
   res.json({ 
     message: 'DevConnect API is running...',
     version: '1.0.0',
-    status: 'active'
+    status: 'active',
+    environment: process.env.NODE_ENV || 'development',
+    features: {
+      auth: ['JWT', 'OAuth (Google, GitHub)', 'Email Verification'],
+      security: ['Rate Limiting', 'XSS Protection', 'CORS', 'Helmet'],
+      realtime: ['Socket.io', 'Notifications']
+    }
   });
 });
 
-// Health check endpoint (for Render)
+// Health check
 app.get('/health', (req, res) => {
   res.status(200).json({ 
     status: 'ok',
+    environment: process.env.NODE_ENV || 'development',
     timestamp: new Date().toISOString(),
     uptime: process.uptime()
   });
 });
 
-// Error handler
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ 
+    message: 'Route not found',
+    path: req.path 
+  });
+});
+
+// Global error handler
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: "Something went wrong!" });
+  console.error('Error:', err);
+  
+  if (err.code === 11000) {
+    const field = Object.keys(err.keyPattern)[0];
+    return res.status(400).json({
+      message: `${field.charAt(0).toUpperCase() + field.slice(1)} already exists`
+    });
+  }
+  
+  if (err.name === 'ValidationError') {
+    const errors = Object.values(err.errors).map(e => e.message);
+    return res.status(400).json({
+      message: 'Validation failed',
+      errors
+    });
+  }
+  
+  if (err.name === 'JsonWebTokenError') {
+    return res.status(401).json({ message: 'Invalid token' });
+  }
+  
+  if (err.name === 'TokenExpiredError') {
+    return res.status(401).json({ message: 'Token expired' });
+  }
+  
+  res.status(err.status || 500).json({ 
+    message: err.message || 'Internal server error',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  });
 });
 
-const PORT = process.env.PORT;
+const PORT = parseInt(process.env.PORT || '5000', 10);
+const HOST = '0.0.0.0';
 
-server.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-  console.log(`Socket.io server ready`);
+server.listen(PORT, HOST, (err) => {
+  if (err) {
+    console.error('❌ Failed to start server:', err);
+    process.exit(1);
+  }
+  console.log(`✅ Server running on ${HOST}:${PORT}`);
+  console.log(`🔒 Security middleware enabled`);
+  console.log(`🔑 OAuth providers: Google, GitHub`);
+  console.log(`⏱️  Rate limiting: ${process.env.NODE_ENV === 'production' ? 'ENABLED' : 'DISABLED'}`);
 });
+
+process.on('SIGTERM', () => {
+  console.log('👋 SIGTERM received, shutting down gracefully...');
+  server.close(() => {
+    console.log('✅ Server closed');
+    process.exit(0);
+  });
+});
+
+export default app;
