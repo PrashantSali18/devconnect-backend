@@ -6,8 +6,8 @@ import {
   markAllAsRead,
   deleteNotification,
   deleteAllNotifications,
-} from "../controllers/notificationController.js";
-import { protect } from "../middleware/auth.js";
+} from "../controllers/notification.controller.js";
+import { protect } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 

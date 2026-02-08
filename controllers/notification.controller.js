@@ -1,4 +1,4 @@
-import Notification from "../models/Notification.js";
+import Notification from "../models/Notifications.model.js";
 import { emitToUser } from "../socket/socket.js";
 
 // @desc    Get user notifications
