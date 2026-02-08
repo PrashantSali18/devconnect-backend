@@ -1,6 +1,6 @@
 import Post from "../models/Posts.model.js";
 import User from "../models/Users.model.js";
-import { createNotification } from "./notifications.controller.js";
+import { createNotification } from "./notification.controller.js";
 import cloudinary from "../config/cloudinary.config.js";
 
 // @desc    Create a new post

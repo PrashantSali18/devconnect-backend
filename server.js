@@ -9,7 +9,7 @@ import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/users.routes.js";
 import messageRoutes from "./routes/message.routes.js";
 import postRoutes from "./routes/posts.routes.js";
-import notificationRoutes from "./routes/notifications.routes.js";
+import notificationRoutes from "./routes/notification.routes.js";
 import { initializeSocket } from "./socket/socket.js";
 
 // Load env vars
