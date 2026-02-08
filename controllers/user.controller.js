@@ -1,5 +1,5 @@
 import User from "../models/Users.model.js";
-import { createNotification } from "./notifications.controller.js";
+import { createNotification } from "./notification.controller.js";
 import { storage } from "../config/cloudinary.config.js";
 
 // @desc    Get user profile by ID
