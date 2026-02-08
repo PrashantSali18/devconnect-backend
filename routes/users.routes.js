@@ -1,36 +1,23 @@
-import { Router } from "express";
-import {
-  getUserProfile,
-  updateProfile,
-  uploadProfilePicture,
-  followUser,
-  unfollowUser,
-  searchUsers,
-  getSuggestedUsers,
-  getFollowers,
-  getFollowing,
-} from "../controllers/user.controller.js";
-import { protect } from "../middleware/auth.middleware.js";
-import { uploadProfile } from "../config/cloudinary.config.js";
+import express from 'express';
+import { 
+  register, 
+  login, 
+  getMe,
+  forgotPassword,
+  resetPassword,
+  verifyEmail,
+  resendVerification
+} from '../controllers/auth.controller.js';
+import { protect } from '../middleware/auth.middleware.js';
 
-const router = Router();
+const router = express.Router();
 
-// Public routes
-router.get("/search", searchUsers);
-router.get("/:id", getUserProfile);
-router.get("/:id/followers", getFollowers);
-router.get("/:id/following", getFollowing);
-
-// Protected routes
-router.put("/profile", protect, updateProfile);
-router.post(
-  "/profile/picture",
-  protect,
-  uploadProfile.single("profilePicture"),
-  uploadProfilePicture,
-);
-router.put("/:id/follow", protect, followUser);
-router.put("/:id/unfollow", protect, unfollowUser);
-router.get("/suggestions/users", protect, getSuggestedUsers);
+router.post('/register', register);
+router.post('/login', login);
+router.get('/me', protect, getMe);
+router.post('/forgot-password', forgotPassword);
+router.put('/reset-password/:resetToken', resetPassword);
+router.get('/verify-email/:token', verifyEmail);
+router.post('/resend-verification', protect, resendVerification);
 
 export default router;
