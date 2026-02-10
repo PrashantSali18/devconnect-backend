@@ -1,8 +1,8 @@
-import passport from 'passport';
-import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
-import { Strategy as GitHubStrategy } from 'passport-github2';
-import User from '../models/Users.model.js';
-import dotenv from 'dotenv';
+import passport from "passport";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import { Strategy as GitHubStrategy } from "passport-github2";
+import User from "../models/Users.model.js";
+import dotenv from "dotenv";
 
 dotenv.config();
 
@@ -28,7 +28,7 @@ passport.use(
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: process.env.GOOGLE_CALLBACK_URL,
-      proxy: true
+      proxy: true,
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -47,13 +47,13 @@ passport.use(
           // User exists with email, link Google account
           user.googleId = profile.id;
           user.linkedAccounts.push({
-            provider: 'google',
+            provider: "google",
             providerId: profile.id,
-            email: profile.emails[0].value
+            email: profile.emails[0].value,
           });
 
           // Update profile picture if not set
-          if (user.profilePicture === 'https://via.placeholder.com/150' && profile.photos && profile.photos[0]) {
+          if (user.profilePicture === '/avtar.png' && profile.photos && profile.photos[0]) {
             user.profilePicture = profile.photos[0].value;
           }
 
@@ -69,23 +69,26 @@ passport.use(
           name: profile.displayName,
           email: profile.emails[0].value,
           googleId: profile.id,
-          profilePicture: profile.photos && profile.photos[0] ? profile.photos[0].value : 'https://via.placeholder.com/150',
-          authProvider: 'google',
+          profilePicture:
+            profile.photos && profile.photos[0] ? profile.photos[0].value : "",
+          authProvider: "google",
           isEmailVerified: true, // Google emails are already verified
-          linkedAccounts: [{
-            provider: 'google',
-            providerId: profile.id,
-            email: profile.emails[0].value
-          }]
+          linkedAccounts: [
+            {
+              provider: "google",
+              providerId: profile.id,
+              email: profile.emails[0].value,
+            },
+          ],
         });
 
         done(null, user);
       } catch (error) {
-        console.error('Google OAuth error:', error);
+        console.error("Google OAuth error:", error);
         done(error, null);
       }
-    }
-  )
+    },
+  ),
 );
 
 // GitHub OAuth Strategy
@@ -95,8 +98,8 @@ passport.use(
       clientID: process.env.GITHUB_CLIENT_ID,
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
       callbackURL: process.env.GITHUB_CALLBACK_URL,
-      scope: ['user:email'],
-      proxy: true
+      scope: ["user:email"],
+      proxy: true,
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -108,9 +111,10 @@ passport.use(
         }
 
         // Get primary email from GitHub
-        const email = profile.emails && profile.emails[0] 
-          ? profile.emails[0].value 
-          : `${profile.username}@github.user`;
+        const email =
+          profile.emails && profile.emails[0]
+            ? profile.emails[0].value
+            : `${profile.username}@github.user`;
 
         // Check if user exists with this email
         user = await User.findOne({ email });
@@ -119,13 +123,13 @@ passport.use(
           // User exists with email, link GitHub account
           user.githubId = profile.id;
           user.linkedAccounts.push({
-            provider: 'github',
+            provider: "github",
             providerId: profile.id,
-            email
+            email,
           });
 
           // Update profile picture if not set
-          if (user.profilePicture === 'https://via.placeholder.com/150' && profile.photos && profile.photos[0]) {
+          if (user.profilePicture === '/avtar.png' && profile.photos && profile.photos[0]) {
             user.profilePicture = profile.photos[0].value;
           }
 
@@ -146,24 +150,27 @@ passport.use(
           name: profile.displayName || profile.username,
           email,
           githubId: profile.id,
-          profilePicture: profile.photos && profile.photos[0] ? profile.photos[0].value : 'https://via.placeholder.com/150',
+          profilePicture:
+            profile.photos && profile.photos[0] ? profile.photos[0].value : "",
           githubUrl: profile.profileUrl,
-          authProvider: 'github',
+          authProvider: "github",
           isEmailVerified: true,
-          linkedAccounts: [{
-            provider: 'github',
-            providerId: profile.id,
-            email
-          }]
+          linkedAccounts: [
+            {
+              provider: "github",
+              providerId: profile.id,
+              email,
+            },
+          ],
         });
 
         done(null, user);
       } catch (error) {
-        console.error('GitHub OAuth error:', error);
+        console.error("GitHub OAuth error:", error);
         done(error, null);
       }
-    }
-  )
+    },
+  ),
 );
 
 export default passport;

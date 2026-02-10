@@ -8,6 +8,7 @@ import {
   verifyEmail,
   resendVerification
 } from '../controllers/auth.controller.js';
+import { getUserProfile } from '../controllers/user.controller.js';
 import { protect } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
@@ -19,5 +20,9 @@ router.post('/forgot-password', forgotPassword);
 router.put('/reset-password/:resetToken', resetPassword);
 router.get('/verify-email/:token', verifyEmail);
 router.post('/resend-verification', protect, resendVerification);
+
+// routes/userRoutes.js
+router.get("/:id", protect, getUserProfile);
+
 
 export default router;

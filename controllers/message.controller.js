@@ -31,7 +31,7 @@ export const sendMessage = async (req, res) => {
     const conversationId = generateConversationId(req.user.id, receiverId);
 
     // Create message
-    const message = await Messagse.create({
+    const message = await Message.create({
       conversation: conversationId,
       sender: req.user.id,
       receiver: receiverId,
@@ -179,7 +179,7 @@ export const markMessagesAsRead = async (req, res) => {
     );
 
     // Reset unread count in conversation
-    const conversation = await findOne({
+    const conversation = await Conversation.findOne({
       participants: { $all: [req.user.id, userId] },
     });
 

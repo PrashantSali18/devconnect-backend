@@ -35,7 +35,6 @@ const userSchema = new mongoose.Schema(
     }],
     profilePicture: {
       type: String,
-      default: 'https://via.placeholder.com/150'
     },
     githubUrl: String,
     linkedinUrl: String,
